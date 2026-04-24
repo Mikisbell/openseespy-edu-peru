@@ -9,8 +9,13 @@ abstract: >-
   AI-ready structured outputs. Pedagogical framework for structural dynamics
   courses in Latin American engineering programs.
 authors:
-  - alias: Mikisbell
-    website: "https://github.com/Mikisbell"
+  - family-names: Rivera Ospina
+    given-names: Miguel Angel
+    email: mikisbell@gmail.com
+    alias: Bélico
+    city: Huancayo
+    region: Junín
+    country: PE
 repository-code: "https://github.com/Mikisbell/openseespy-edu-peru"
 url: "https://github.com/Mikisbell/openseespy-edu-peru"
 license: MIT

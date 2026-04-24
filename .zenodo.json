@@ -6,8 +6,15 @@
   "license": "MIT",
   "creators": [
     {
-      "name": "Mikisbell",
-      "affiliation": "Independent researcher"
+      "name": "Rivera Ospina, Miguel Angel",
+      "affiliation": "Huancayo, Junín, Peru"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Rivera Ospina, Miguel Angel",
+      "type": "ProjectLeader",
+      "affiliation": "Huancayo, Junín, Peru"
     }
   ],
   "keywords": [
