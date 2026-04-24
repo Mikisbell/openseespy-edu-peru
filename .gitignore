@@ -62,15 +62,14 @@ coverage.xml
 *.snm
 *.toc
 
-# Generated figures (regenerable from data/processed/)
-articles/figures/*.png
-articles/figures/*.pdf
-articles/figures/*.svg
-!articles/figures/.gitkeep
+# Paper artefacts — belong in separate paper repos, NOT in the framework
+articles/
+*.pdf
+*.tex
 
-# Raw data (large, regenerated locally)
-data/raw/
-data/downloads/
+# User-generated data (inputs + compute outputs, regenerated locally)
+# Framework does not ship data; users fetch PEER records and run examples.
+data/
 
 # Secrets / credentials
 .env

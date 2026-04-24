@@ -43,7 +43,7 @@ python examples/rc_5story_peru/run_ida.py
 python tools/plot_figures.py --domain structural
 ```
 
-All figures and statistics are regenerated from `data/processed/` with SHA-256 integrity seals.
+All figures and statistics are regenerated locally in the working directory (not shipped with the repo) and sealed with SHA-256 integrity hashes via `tools/generate_compute_manifest.py`.
 
 ## Citation
 
