@@ -9,13 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - v1.0.0-pending
 
+### Done (2026-04-23)
+
+- ✅ Skeleton committed: README, CITATION.cff, .zenodo.json, .gitignore, folder structure
+- ✅ Author identity set: Miguel Angel Rivera Ospina (alias: Bélico), Huancayo, Junín, Peru
+- ✅ **Code extraction complete:** 7,169 LOC across 18 Python modules + YAML template
+  - `src/physics/` — 6 modules (torture_chamber, peer_adapter, solver_backend, spectral_engine, models/params, __init__)
+  - `examples/rc_5story_peru/` — 4 runners (run_monte_carlo, run_pushover, run_ida, run_nga_comparison)
+  - `tools/` — 5 utilities (plot_figures, generate_compute_manifest, preflight_statistics, select_ground_motions, peer_downloader)
+  - `config/params.example.yaml` — SSOT template (compacted from 1,165 to 353 lines)
+  - `requirements.txt` — pinned deps (openseespy 3.6.0, numpy/scipy/matplotlib/pyyaml/pandas/statsmodels)
+- ✅ Generalization verified: 0 references to `laicsee-2026` or `laicsee` across source tree
+- ✅ All 18 Python modules pass `ast.parse` syntax validation
+
 ### In progress
 
-- Extraction of framework code from `belico-stack` child project `laicsee-2026`
-- Generalization of hardcoded LAICSEE-specific parameters to configurable SSOT
-- Test suite for CI (pytest + property-based with hypothesis)
-- Documentation: architecture overview, API reference, tutorial notebooks
 - First real-laptop reproduction run from `git clone` to `plot_figures` in < 10 min
+- Streamlit dashboard `app.py` for browser-based interactive demo (Session 3)
+- Zenodo DOI mint via GitHub Release v1.0.0 (Session 4, target 2026-05-08)
+- CI GitHub Actions for automated validation
 
 ### Planned for v1.0.0 (release target: 2026-05-08)
 

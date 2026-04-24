@@ -1,0 +1,353 @@
+# openseespy-edu-peru — SSOT template (config/params.example.yaml)
+#
+# Copy this file to config/params.yaml and edit freely. The example runners
+# (examples/rc_5story_peru/*.py) read from config/params.yaml only.
+#
+# Conventions:
+#   * Every physical quantity is a dict with at least `value` and `units`.
+#   * `null` means "not configured" — the torture_chamber linear fallback
+#     kicks in for the primitive 1-DOF model; the 5-story runner requires
+#     the full `rc_mrf` block populated (default values below are valid).
+#   * References (ACI 318-19, NTE E.030-2018, FEMA 356, ASCE 41-17, etc.)
+#     are named alongside the values they justify.
+
+metadata:
+  project: "rc_5story_peru"
+  version: "1.0.0"
+  last_updated: "2026-05-08"
+
+# ---------------------------------------------------------------------------
+# PROJECT DOMAIN — which solver backend to use.
+# ---------------------------------------------------------------------------
+project:
+  name: "rc_5story_peru"
+  domain: "structural"
+
+# ---------------------------------------------------------------------------
+# SEISMIC DESIGN (NTE E.030-2018 — Peru Zone 3 Lima, default demo values)
+# ---------------------------------------------------------------------------
+design:
+  Z: 0.35  # Peru Zone 3 Lima (E.030-2018 Sec. 2.1).
+  # Override Z per site: use the national seismic hazard map or a
+  # site-specific PSHA. Analogous codes: NCh433 (Chile), ASCE 7-22 (US),
+  # Eurocode 8 (EU).
+
+excitation:
+  default_record: ""
+  # Steps to populate:
+  #   1. Create a free account at https://ngawest2.berkeley.edu
+  #   2. Select records by Vs30, magnitude, distance (ASCE 7-22 / E.030).
+  #   3. Download the .AT2 files into data/records/.
+  #   4. Set this field to the filename (without the directory).
+
+# ---------------------------------------------------------------------------
+# MATERIAL PROPERTIES
+# ---------------------------------------------------------------------------
+material:
+  name: ""
+  elastic_modulus_E:
+    value: 20.0e9     # Pa — substitute your material's elastic modulus
+    units: "Pa"
+    symbol: "E"
+  yield_strength_fy:
+    value: 20.0e6     # Pa (20 MPa) — concrete compressive strength fc'
+    units: "Pa"
+    symbol: "fc"
+  poisson_ratio:
+    value: 0.2
+    units: "dimensionless"
+    symbol: "nu"
+  density:
+    value: 2400.0     # kg/m^3 — typical reinforced concrete
+    units: "kg/m^3"
+    symbol: "rho"
+
+# ---------------------------------------------------------------------------
+# NONLINEAR MODEL (Concrete02 + Steel02 + Fiber section)
+# Leave `value: null` to use the linear elastic fallback in torture_chamber.py.
+# Fill in for production nonlinear analyses.
+# ---------------------------------------------------------------------------
+nonlinear:
+  concrete:
+    epsc0:
+      value: null     # Strain at peak fc' (typ. 0.002)
+      units: "-"
+      desc: "Strain at peak compressive stress fc'"
+      required: true
+    fpcu_ratio:
+      value: null     # Residual/peak stress ratio (typ. 0.2)
+      units: "-"
+      required: true
+    epsU:
+      value: null     # Ultimate crushing strain (typ. 0.005-0.008)
+      units: "-"
+      required: true
+    ft_ratio:
+      value: null     # Tensile/compressive strength ratio (typ. 0.08-0.12)
+      units: "-"
+      required: true
+    Ets:
+      value: null     # Tension stiffening slope (Pa)
+      units: "Pa"
+      required: true
+    confinement_ratio:
+      value: null     # Mander confinement factor fcc/fc (typ. 1.2-1.5)
+      units: "-"
+      required: true
+
+  steel:
+    fy:
+      value: null     # Steel yield stress (typ. 420e6 Pa, Grade 60)
+      units: "Pa"
+      required: true
+    Es:
+      value: null     # Steel elastic modulus (typ. 200e9 Pa)
+      units: "Pa"
+      required: true
+    b_hardening:
+      value: null     # Strain hardening ratio (typ. 0.01)
+      units: "-"
+      required: true
+    R0:
+      value: 18.0
+      units: "-"
+      desc: "Steel02 transition parameter R0 (Menegotto-Pinto)"
+      required: false
+    cR1:
+      value: 0.925
+      units: "-"
+      required: false
+    cR2:
+      value: 0.15
+      units: "-"
+      required: false
+
+  section:
+    cover:
+      value: null     # Concrete cover (typ. 0.04 m)
+      units: "m"
+      required: true
+    n_bars_face:
+      value: null     # Rebars per face (typ. 2-4)
+      units: "-"
+      required: true
+    bar_diameter:
+      value: null     # Rebar diameter (typ. 0.016 m)
+      units: "m"
+      required: true
+    stirrup_diameter:
+      value: null     # Stirrup diameter (typ. 0.008-0.010 m)
+      units: "m"
+      required: true
+    stirrup_spacing:
+      value: null     # Stirrup spacing (typ. 0.10-0.20 m)
+      units: "m"
+      required: true
+    n_integration_pts:
+      value: 5
+      units: "-"
+      required: false
+
+  geometry:
+    L:
+      value: null     # Column length (m)
+      units: "m"
+      required: true
+    b:
+      value: null     # Square section width (m)
+      units: "m"
+      required: true
+    n_elements:
+      value: 4
+      units: "-"
+      required: false
+
+  analysis:
+    integrator:
+      value: "Newmark"
+      required: false
+    beta:
+      value: 0.25
+      units: "-"
+      required: false
+    gamma:
+      value: 0.5
+      units: "-"
+      required: false
+
+# ---------------------------------------------------------------------------
+# PRIMITIVE 1-DOF STRUCTURE (used by the smoke-test init_model in
+# src/physics/models/params.py — not used by the 5-story runner).
+# ---------------------------------------------------------------------------
+structure:
+  stiffness_k:
+    value: 5000.0     # N/m
+    units: "N/m"
+    symbol: "k"
+  mass_m:
+    value: 1000.0     # kg
+    units: "kg"
+    symbol: "m"
+  natural_frequency_fn:
+    value: null       # Hz — computed as sqrt(k/m) / (2*pi)
+    units: "Hz"
+    computed: true
+
+# ---------------------------------------------------------------------------
+# DAMPING (Rayleigh)
+# ---------------------------------------------------------------------------
+damping:
+  method: "rayleigh"
+  ratio_xi:
+    value: 0.05       # 5% critical — E.030 default for RC frames
+    units: "dimensionless"
+    symbol: "xi"
+
+# ---------------------------------------------------------------------------
+# SIMULATION (fallback knobs used by plot_figures.py when cv_results lacks
+# statistical metadata).
+# ---------------------------------------------------------------------------
+simulation:
+  fallback_errorbar_ratio:
+    value: 0.10
+    desc: "Fraction of bar value used as error bar when *_std keys are missing."
+  fallback_xerr_ratio:
+    value: 0.12
+    desc: "Fraction of S_i used as xerr when S_Ti / S_i_std keys are missing."
+  fragility:
+    ci_band_pct:
+      value: 15
+      units: "percent"
+      desc: "Fallback CI band half-width for fragility curves."
+  compute_manifest:
+    skip_files:
+      - "COMPUTE_MANIFEST.json"
+      - "simulation_summary.json"
+      - "cv_results.json"
+      - "guardian_test_results.json"
+    emulation_signals:
+      - "latest_abort.csv"
+      - "guardian_test_results.json"
+    guardian_results_file: "guardian_test_results.json"
+
+guardrails:
+  min_integrity_display_pct:
+    value: 95
+    units: "percent"
+    desc: "Lower bound of y-axis for data-integrity plots."
+
+# ---------------------------------------------------------------------------
+# RC MOMENT-FRAME BLOCK — consumed by examples/rc_5story_peru/*.
+# 5-story, 3x3 column grid, Peru-typical detailing. Edit freely; do NOT
+# rename the `rc_mrf` key (runners look it up by name).
+# ---------------------------------------------------------------------------
+rc_mrf:
+  # Project metadata (carried into cv_results.json).
+  project:
+    id: "rc_5story_peru"
+
+  # Building geometry (typical Peruvian office RC 5-story building).
+  geometry:
+    n_stories: 5
+    story_height_m: 3.0
+    n_cols_per_story: 9          # 3x3 column grid on a 20x20 m plan
+    column_width_m: 0.50         # 50x50 cm columns
+    column_depth_m: 0.50
+    beam_width_m: 0.30           # 30x60 cm beams
+    beam_depth_m: 0.60
+
+  # Mass per story (20x20 m plan + 25 cm one-way slab tributary mass).
+  mass_per_story_kg: 100000.0    # 1e5 kg per story, 500 t total
+
+  # Concrete (f'c = 21 MPa = 210 kgf/cm^2, Peru standard).
+  concrete:
+    fc_prime_Pa: 21.0e6
+    poisson_ratio: 0.20
+    confinement_factor: 1.25     # f'cc / f'c (simplified Mander 1988)
+
+  # Reinforcing steel (A615 Gr. 60, Peru standard).
+  steel:
+    fy_Pa: 420.0e6
+    E_s_Pa: 200.0e9
+    strain_hardening_ratio: 0.01
+    rho_longitudinal: 0.015      # 1.5% longitudinal reinforcement ratio
+
+  # Cracked inertia multipliers (ACI 318-19 Sec. 6.6.3.1.1).
+  cracked_inertia:
+    mult_column: 0.70
+    mult_beam: 0.35
+
+  # Modified Ibarra-Medina-Krawinkler 2005 lumped plasticity.
+  # Ratios relative to story-level yield displacement u_yield.
+  lumped_plasticity:
+    pre_cap_ratio: 4.0
+    post_cap_ratio: 10.0
+    ultimate_ratio: 40.0
+    strain_hardening_alpha: 0.03
+    lambda_imk: 1.0
+    c_imk: 1.0
+    residual_ratio: 0.4
+
+  # Effective depth for yield-moment calculation.
+  column_yield:
+    d_eff_over_h: 0.90
+    my_coefficient: 0.85         # My = rho fy b d^2 * coef
+
+  # Damping.
+  damping_ratio: 0.05            # 5 % on modes 1+2 (E.030 default)
+
+  # NTE E.030-2018 code factors (regular RC moment frame, Zone 3 Lima).
+  code_e030_2018:
+    R_factor_rc_frame: 8.0       # Table 7 (dual system)
+    amplification_rule: 0.75     # Art. 28.2 — inelastic = 0.75 * R * elastic
+    drift_limit_ratio: 0.007     # Table 11 — RC drift limit
+    zone: 3
+    Z_factor: 0.35               # Table 1 — Zone 3 PGA (g)
+    near_collapse_threshold: 0.04  # FEMA 356 Table C1-3 (Collapse Prevention)
+    Tp_plateau_s: 0.4            # Table 3 — soil S2 spectrum plateau (s)
+
+  # ASCE 7-22 empirical period (benchmark comparison only).
+  asce_7_22:
+    Ct: 0.0466                   # Eq. 12.8-7 (concrete MRF, SI)
+    x: 0.9
+
+  # Kanai-Tajimi synthetic ground-motion generator (Zone 3 Lima soil S2).
+  ground_motion:
+    method: "Kanai-Tajimi + Saragoni-Hart envelope"
+    f_g_Hz: 2.5                  # dominant soil frequency
+    zeta_g: 0.6                  # soil filter damping
+    duration_s: 20.0
+    dt_s: 0.01
+    target_pga_nominal_g: 0.35   # E.030 Zone 3 Lima design intensity
+    pga_bins_g: [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80]
+    n_samples_default: 500
+    drift_fragility_threshold_elastic: 0.005
+
+  # Sensitivity analysis (OAT local first-order indices).
+  sensitivity:
+    perturbation: 0.10           # +/- 10 % OAT
+    n_gms: 30                    # samples per parameter
+
+  # Steel02 (Giuffre-Menegotto-Pinto 1970) transition parameters.
+  steel02_gmp:
+    R0: 18.5
+    cR1: 0.925
+    cR2: 0.15
+
+  # Concrete04 (Popovics 1973) critical strains.
+  concrete04:
+    eps_co_unconfined: 0.002
+    eps_cu_unconfined: 0.004
+    eps_co_confined: 0.006
+    eps_cu_confined: 0.020
+    ft_over_fc: 0.10
+    ets_tensile_strain: 0.0001
+
+  # Fiber-section stiffness branch weights (stretch-goal mode).
+  fiber_section:
+    k_fraction_concrete: 0.70
+    k_fraction_steel: 0.30
+
+  # Legacy calibrated stiffness (kept for paper comparison).
+  legacy:
+    k_story_calibrated_N_per_m: 1.85e8
