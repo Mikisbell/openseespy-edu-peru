@@ -232,9 +232,9 @@ with col_plot:
     st.plotly_chart(fig, use_container_width=True)
 
     if run:
-        st.success(
-            "Simulación ejecutada · η = 216 puntos · 0.08 s de cálculo.",
-            icon="✅",
+        st.caption(
+            f"Modelo bilineal (ASCE 41-17) recomputado · {n_pts} puntos en la curva · "
+            "respuesta instantánea (forma cerrada, sin solver)."
         )
 
     # Key metrics.
