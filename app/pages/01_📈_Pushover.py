@@ -125,7 +125,24 @@ with col_plot:
     K0 = k_MNm * 1e6  # N/m
     Vy_N = fy_kN * 1e3
     delta_y = Vy_N / K0  # m
-    delta_u = min(0.04 * height_m, delta_y * 6.0)  # cap at 4% roof drift or mu=6.
+
+    # FEMA 356 / ASCE 41-17 Sec. 3.3.1.2.1 definition of Delta_u:
+    # "first post-peak drop to 0.80 V_peak" (paper §2.4).
+    # In the bilinear idealisation with softening (alpha < 0), V_peak = V_y
+    # and V(delta) = Vy + alpha*K0*(delta - delta_y) for delta > delta_y.
+    # Setting V(delta_u) = 0.80 * V_y gives:
+    #     delta_u = delta_y + (-0.20 * V_y) / (alpha * K0)        (alpha < 0)
+    # For alpha >= 0 (hardening / perfectly plastic) the curve never drops to
+    # 0.80 V_peak, so we fall back to FEMA 356 Table C1-3 near-collapse roof
+    # drift of 0.04 * H. In practice the FEMA criterion also gets capped by
+    # 0.04 * H if alpha is very small (near-elastic-perfectly-plastic).
+    roof_drift_cap = 0.04 * height_m  # FEMA 356 near-collapse roof drift
+    if alpha_post < 0:
+        delta_u_fema = delta_y + (-0.20 * Vy_N) / (alpha_post * K0)
+    else:
+        delta_u_fema = float("inf")
+    delta_u = min(delta_u_fema, roof_drift_cap)
+    cap_active = delta_u_fema > roof_drift_cap  # True when 4% H governs
 
     n_pts = 200
     delta = np.linspace(0.0, delta_u, n_pts)
@@ -216,15 +233,20 @@ with col_plot:
 
     if run:
         st.success(
-            f"Simulación ejecutada · η = 216 puntos · 0.08 s de cálculo.",
-            icon="✓",
+            "Simulación ejecutada · η = 216 puntos · 0.08 s de cálculo.",
+            icon="✅",
         )
 
     # Key metrics.
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Δ_y (mm)", f"{delta_y*1000:.1f}")
     m2.metric("V_y (kN)", f"{Vy_N/1e3:,.0f}")
-    m3.metric("Ductilidad μ", f"{mu:.2f}")
+    mu_help = (
+        "Δ_u = 0.04·H (tope FEMA 356 near-collapse). α ≥ 0 no ablanda."
+        if cap_active
+        else "Δ_u donde V cae al 80 % de V_peak (FEMA 356 / ASCE 41-17)."
+    )
+    m3.metric("Ductilidad μ", f"{mu:.2f}", help=mu_help)
     m4.metric("V_peak (kN)", f"{V_peak/1e3:,.0f}")
 
 # ---------------------------------------------------------------------------
@@ -244,10 +266,13 @@ La curva **V vs Δ** resume el comportamiento no lineal del edificio:
 3. **Post-fluencia** — si α > 0, endurecimiento (poco común). Si α < 0, ablandamiento
    (típico en estructuras reales de concreto, porque la carga axial induce daño geométrico P-Δ).
 4. **Ductilidad μ = Δ_u / Δ_y** — cuántas veces la deformación de fluencia aguanta
-   la estructura antes de colapsar.
+   la estructura antes de que el corte basal caiga al **80 % del pico** (criterio FEMA 356
+   / ASCE 41-17 §3.3.1.2.1). Con rama de ablandamiento, Δ_u sale del slope α directamente;
+   si α ≥ 0 se aplica el tope FEMA 356 de 0.04·H (near-collapse roof drift).
 
-El caso LAICSEE reporta μ ≈ 2.7 y α ≈ -0.12, valores consistentes con un pórtico
-peruano de 5 niveles sin muros de corte.
+El caso LAICSEE reporta μ ≈ 2.73 y α ≈ -0.116, valores consistentes con un pórtico
+peruano de 5 niveles sin muros de corte. Observá que μ depende fuertemente de α: a mayor
+ablandamiento (α más negativo), menor ductilidad.
 """
     )
 
@@ -262,10 +287,13 @@ with exp_b:
 3. **Post-yield** — α > 0 means hardening (rare). α < 0 means softening, typical of
    real RC frames because axial load triggers P-Δ geometric damage.
 4. **Ductility μ = Δ_u / Δ_y** — how many yield-deformations the building sustains
-   before collapse.
+   before base shear drops to **80 % of the peak** (FEMA 356 / ASCE 41-17 §3.3.1.2.1).
+   With softening branch, Δ_u follows directly from α; if α ≥ 0 we fall back to the
+   FEMA 356 near-collapse cap of 0.04·H.
 
-The LAICSEE case reports μ ≈ 2.7 and α ≈ −0.12, consistent with a 5-story Peruvian
-frame without shear walls.
+The LAICSEE case reports μ ≈ 2.73 and α ≈ −0.116, consistent with a 5-story Peruvian
+frame without shear walls. Note μ is mostly controlled by α: the more negative the
+softening, the lower the available ductility.
 """
     )
 
